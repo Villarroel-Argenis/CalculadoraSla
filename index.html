@@ -5,53 +5,122 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Calculadora SLA</title>
 <style>
-  body{font-family:system-ui,-apple-system,sans-serif;max-width:800px;margin:24px auto;padding:0 16px;color:#1f2937}
-  h1{font-size:1.4rem;margin-bottom:12px}
-  fieldset{border:1px solid #d1d5db;border-radius:8px;margin:0 0 16px;padding:12px 16px}
+  /* Tema claro (por defecto) */
+  :root{color-scheme:light;--bg:#ffffff;--surface:#ffffff;--surface-2:#f1f5f9;--fg:#1f2937;--muted:#6b7280;--line:#d1d5db;--field:#cbd5e1;--card-border:#e5e7eb;--hdr:#4b5563;--primary:#2563eb;--primary-h:#1d4ed8;--focus:#2563eb;--sec:#475569;--sec-h:#334155;--danger:#b91c1c;--danger-h:#991b1b;--ok:#15803d;--warn:#b45309;--bad-bg:#fef2f2;--warn-bg:#fffbeb;--good-bg:#f0fdf4;--bad-border:#fecaca;--warn-border:#fde68a;--good-border:#bbf7d0;--badge-bg:#fef3c7;--badge-fg:#92400e}
+  /* Tema oscuro elegido explícitamente */
+  :root[data-theme="dark"]{color-scheme:dark;--bg:#0f172a;--surface:#1e293b;--surface-2:#273449;--fg:#e2e8f0;--muted:#94a3b8;--line:#334155;--field:#475569;--card-border:#334155;--hdr:#cbd5e1;--primary:#3b82f6;--primary-h:#2563eb;--focus:#60a5fa;--sec:#475569;--sec-h:#64748b;--danger:#f87171;--danger-h:#ef4444;--ok:#4ade80;--warn:#fbbf24;--bad-bg:#3b1212;--warn-bg:#3a2a08;--good-bg:#0f2e1b;--bad-border:#7f1d1d;--warn-border:#78350f;--good-border:#14532d;--badge-bg:#422006;--badge-fg:#fcd34d}
+  /* Tema del sistema: oscuro solo si el usuario no eligió claro */
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){color-scheme:dark;--bg:#0f172a;--surface:#1e293b;--surface-2:#273449;--fg:#e2e8f0;--muted:#94a3b8;--line:#334155;--field:#475569;--card-border:#334155;--hdr:#cbd5e1;--primary:#3b82f6;--primary-h:#2563eb;--focus:#60a5fa;--sec:#475569;--sec-h:#64748b;--danger:#f87171;--danger-h:#ef4444;--ok:#4ade80;--warn:#fbbf24;--bad-bg:#3b1212;--warn-bg:#3a2a08;--good-bg:#0f2e1b;--bad-border:#7f1d1d;--warn-border:#78350f;--good-border:#14532d;--badge-bg:#422006;--badge-fg:#fcd34d}
+  }
+  .themebar{display:flex;justify-content:flex-end;align-items:center;gap:8px;margin:0 0 12px}
+  .themebar label{display:inline;margin:0;font-size:.85rem;color:var(--muted)}
+  .themebar select{width:auto;min-width:140px;margin:0;padding:6px 8px;font-size:.9rem}
+  body{font-family:system-ui,-apple-system,sans-serif;max-width:800px;margin:24px auto;padding:0 16px 48px;color:var(--fg);background:var(--bg)}
+  h1{font-size:1.4rem;margin:0 0 4px}
+  .lead{color:var(--muted);margin:0 0 16px;font-size:.95rem}
+  fieldset{border:1px solid var(--line);border-radius:8px;margin:0 0 16px;padding:12px 16px}
   legend{font-weight:600;padding:0 6px}
-  label{display:block;font-size:.9rem;margin:8px 0 4px}
-  input,select,textarea{width:100%;box-sizing:border-box;padding:8px;border:1px solid #cbd5e1;border-radius:6px;font-size:.95rem}
+  label{display:block;font-size:.9rem;margin:10px 0 4px}
+  input,select,textarea{width:100%;box-sizing:border-box;padding:8px;border:1px solid var(--field);border-radius:6px;font-size:.95rem;background:var(--surface);color:var(--fg);font-family:inherit}
+  input:disabled{background:var(--surface-2);color:var(--muted)}
+  input:focus,select:focus,textarea:focus,button:focus-visible{outline:2px solid var(--primary);outline-offset:1px}
+  .invalid{border-color:var(--danger)!important;background:var(--bad-bg)!important}
   .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-  .dayrow{display:grid;grid-template-columns:120px 70px 1fr 1fr;gap:8px;align-items:center;margin:4px 0}
-  .dayrow input[type=checkbox]{width:auto;justify-self:start}
+  .dayrow{display:grid;grid-template-columns:120px 80px 1fr 1fr;gap:8px;align-items:center;margin:4px 0;padding:2px 4px;border-radius:6px}
+  .dayrow.rowErr{background:var(--bad-bg);outline:1px solid var(--danger)}
+  .dayrow input[type=checkbox]{width:auto;justify-self:start;margin-left:4px;transform:scale(1.2)}
   .dayrow input{padding:4px}
-  .hdr{font-weight:600;font-size:.85rem;color:#4b5563}
-  button{background:#2563eb;color:#fff;border:0;border-radius:6px;padding:10px 18px;font-size:1rem;cursor:pointer;margin:4px 6px 4px 0}
-  button:hover{background:#1d4ed8}
-  button.sec{background:#475569}
-  button.sec:hover{background:#334155}
-  button.danger{background:#b91c1c}
-  button.danger:hover{background:#991b1b}
-  .results{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:16px}
-  .card{border:1px solid #e5e7eb;border-radius:8px;padding:12px;font-size:.9rem}
-  .card b{display:block;font-size:1.15rem;margin-top:6px}
-  .warn{color:#b45309;font-weight:600;margin-top:12px}
-  .err{color:#b91c1c;font-weight:600;margin-top:12px}
-  small{color:#6b7280;display:block;margin-top:4px}
-  @media (max-width:600px){.row{grid-template-columns:1fr}.dayrow{grid-template-columns:90px 60px 1fr 1fr}}
+  .hdr{font-weight:600;font-size:.85rem;color:var(--hdr)}
+  .hint{color:var(--muted);font-size:.85rem;margin:8px 0 0}
+  .actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  button{background:var(--primary);color:#fff;border:0;border-radius:6px;padding:10px 18px;font-size:1rem;cursor:pointer}
+  button:hover{background:var(--primary-h)}
+  button.secondary{background:var(--sec)}
+  button.secondary:hover{background:var(--sec-h)}
+  button.ghost{background:var(--surface);color:var(--sec);border:1px solid var(--field)}
+  button.ghost:hover{background:var(--surface-2)}
+  button.danger{background:var(--danger)}
+  button.danger:hover{background:var(--danger-h)}
+  button.danger.armed{background:#7f1d1d}
+  .interp{display:block;font-size:.85rem;margin-top:4px;color:var(--muted);min-height:1.2em}
+  .interp.ok{color:var(--ok)}
+  .interp.err{color:var(--danger);font-weight:600}
+  .calbar{display:flex;gap:10px;align-items:center}
+  .calbar select{flex:1}
+  .badge{background:var(--badge-bg);color:var(--badge-fg);font-size:.8rem;padding:4px 10px;border-radius:999px;white-space:nowrap}
+  .msgbox{border-radius:6px;padding:10px 12px;margin-top:12px;font-size:.92rem;border:1px solid transparent}
+  .msgbox.bad{background:var(--bad-bg);color:var(--danger);border-color:var(--bad-border)}
+  .msgbox.warn{background:var(--warn-bg);color:var(--warn);border-color:var(--warn-border)}
+  .msgbox.good{background:var(--good-bg);color:var(--ok);border-color:var(--good-border)}
+  .result-head{margin-top:20px;display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;align-items:baseline}
+  .result-head h2{font-size:1.05rem;margin:0}
+  .resmeta{color:var(--muted);font-size:.85rem}
+  .results{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin-top:10px}
+  .card{border:1px solid var(--card-border);border-radius:8px;padding:14px;font-size:.9rem}
+  .card .lbl{font-weight:600}
+  .card .sub{color:var(--muted);font-size:.85rem}
+  .card b{display:block;font-size:1.5rem;margin-top:8px}
+  .card small{display:block;color:var(--muted);font-size:.85rem;margin-top:2px}
+  .empty{color:var(--muted);border:1px dashed var(--field);border-radius:8px;padding:16px;margin-top:10px;font-size:.95rem}
+  @media (max-width:600px){.row{grid-template-columns:1fr}.dayrow{grid-template-columns:90px 70px 1fr 1fr}}
 </style>
 </head>
 <body>
+<div class="themebar">
+  <label for="theme">Tema</label>
+  <select id="theme">
+    <option value="system">Sistema</option>
+    <option value="light">Claro</option>
+    <option value="dark">Oscuro</option>
+  </select>
+</div>
 <h1>Calculadora SLA</h1>
+<p class="lead">Calcula los minutos hábiles entre la creación, la meta y el deadline según el calendario elegido.</p>
 
-<fieldset>
-  <legend>Fechas</legend>
-  <label for="created">Fecha de creación</label>
-  <input type="text" id="created" placeholder="20261016T134845.447 GMT">
-  <label for="goal">Fecha goal (meta)</label>
-  <input type="text" id="goal" placeholder="20261016T170000.000 GMT">
-  <label for="deadline">Deadline</label>
-  <input type="text" id="deadline" placeholder="20261017T090000.000 GMT">
-  <small>Formato AAAAMMDDTHHMMSS.mmm GMT. Sin "GMT" se toma como hora de la zona del calendario.</small>
-</fieldset>
+<form id="calcForm" novalidate>
+  <fieldset>
+    <legend>1. Fechas</legend>
 
-<button id="calc">Calcular</button>
-<div id="out"></div>
+    <label for="created">Fecha de creación</label>
+    <input type="text" id="created" autocomplete="off" spellcheck="false" placeholder="20261016T134845.447 GMT" aria-describedby="i-created h-dates">
+    <span class="interp" id="i-created" aria-live="polite"></span>
 
-<fieldset>
-  <legend>Calendario</legend>
+    <label for="goal">Fecha goal (meta)</label>
+    <input type="text" id="goal" autocomplete="off" spellcheck="false" placeholder="20261016T170000.000 GMT" aria-describedby="i-goal">
+    <span class="interp" id="i-goal" aria-live="polite"></span>
+
+    <label for="deadline">Deadline</label>
+    <input type="text" id="deadline" autocomplete="off" spellcheck="false" placeholder="20261017T090000.000 GMT" aria-describedby="i-deadline">
+    <span class="interp" id="i-deadline" aria-live="polite"></span>
+
+    <p class="hint" id="h-dates">Formato AAAAMMDDTHHMMSS.mmm GMT. Sin GMT, la hora se toma en la zona del calendario seleccionado. Debajo de cada fecha verás cómo se interpretó.</p>
+  </fieldset>
+
+  <div class="actions">
+    <button type="submit" id="calc">Calcular</button>
+    <button type="button" id="clearDates" class="ghost">Limpiar fechas</button>
+  </div>
+</form>
+
+<section aria-labelledby="resTitle">
+  <div class="result-head">
+    <h2 id="resTitle">Resultado</h2>
+    <span class="resmeta" id="resMeta"></span>
+  </div>
+  <div id="out" aria-live="polite">
+    <p class="empty">Ingresa la fecha de creación y la meta o el deadline, luego presiona Calcular.</p>
+  </div>
+</section>
+
+<fieldset id="calFs">
+  <legend>2. Calendario</legend>
+
   <label for="cal">Calendario</label>
-  <select id="cal"></select>
+  <div class="calbar">
+    <select id="cal"></select>
+    <span class="badge" id="dirty" hidden>Cambios sin guardar</span>
+  </div>
 
   <div class="row">
     <div>
@@ -60,41 +129,52 @@
     </div>
     <div>
       <label for="tz">Zona horaria</label>
-      <input type="text" id="tz" placeholder="America/Santo_Domingo">
+      <input type="text" id="tz" placeholder="America/Santo_Domingo" aria-describedby="tzErr">
+      <span class="interp" id="tzErr" aria-live="polite"></span>
     </div>
   </div>
+
   <label for="locale">Locale</label>
   <input type="text" id="locale" placeholder="es_DO">
 
-  <div style="margin-top:12px">
-    <div class="dayrow hdr"><span>Día</span><span>Hábil</span><span>Inicio</span><span>Fin</span></div>
-    <div id="days"></div>
-  </div>
+  <p class="hint">Marca los días hábiles. Los días sin marcar no cuentan. Inicio y fin en formato HH:MM:SS.</p>
+  <div class="dayrow hdr" aria-hidden="true"><span>Día</span><span>Hábil</span><span>Inicio</span><span>Fin</span></div>
+  <div id="days"></div>
 
-  <label for="holidays">Días cerrados (AAAA-MM-DD, uno por línea)</label>
-  <textarea id="holidays" rows="6"></textarea>
+  <label for="holidays">Días cerrados</label>
+  <textarea id="holidays" rows="6" placeholder="2026-12-25" aria-describedby="hCount hErr"></textarea>
+  <span class="interp" id="hCount"></span>
+  <span class="interp err" id="hErr"></span>
 
-  <div style="margin-top:8px">
-    <button id="bSave" class="sec">Guardar cambios</button>
-    <button id="bNew" class="sec">Guardar como nuevo</button>
-    <button id="bDel" class="danger">Eliminar</button>
+  <div class="actions">
+    <button type="button" id="bSave" class="secondary">Guardar cambios</button>
+    <button type="button" id="bNew" class="secondary">Guardar como nuevo</button>
+    <button type="button" id="bDel" class="danger">Eliminar</button>
   </div>
-  <small id="msg"></small>
+  <div id="msg" class="msgbox" role="status" hidden></div>
 </fieldset>
 
 <fieldset>
-  <legend>Archivo de calendarios (JSON)</legend>
-  <button id="bExp" class="sec">Exportar calendarios.json</button>
-  <label for="imp" style="margin-top:12px">Importar un archivo .json (reemplaza los que tengan el mismo id)</label>
+  <legend>3. Respaldo en JSON</legend>
+  <p class="hint">Los calendarios viven en esta página mientras esté abierta. Descarga el archivo para conservarlos y, cuando los necesites de nuevo, impórtalo.</p>
+  <div class="actions">
+    <button type="button" id="bExp" class="secondary">Descargar calendarios (.json)</button>
+  </div>
+
+  <label for="imp">Importar archivo .json</label>
   <input type="file" id="imp" accept=".json,application/json">
-  <small>Los calendarios viven en la página hasta que los exportes.</small>
-  <textarea id="jsonOut" rows="8" hidden placeholder="Si la descarga no funciona, copia este texto y guárdalo como calendarios.json"></textarea>
+  <p class="hint">Un calendario importado con el mismo id reemplaza al que ya existe. Los demás se agregan.</p>
+
+  <div id="bkMsg" class="msgbox" role="status" hidden></div>
+  <textarea id="jsonOut" rows="8" hidden aria-label="Contenido JSON de los calendarios" style="margin-top:10px"></textarea>
 </fieldset>
 
 <script>
 const $ = id => document.getElementById(id);
 const DIAS = ['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
 const TZ_DEFAULT = 'America/Santo_Domingo';
+const EXAMPLE = '20261016T134845.447 GMT';
+const EMPTY = '<p class="empty">Ingresa la fecha de creación y la meta o el deadline, luego presiona Calcular.</p>';
 
 // schedule: índice = getDay() (0 = domingo). null = no hábil. [inicio, fin] en segundos desde medianoche.
 const state = {
@@ -107,9 +187,24 @@ const state = {
   }
 };
 let current = 'custom';
+let dirty = false;
+let armTimer = null;
+
+// ---------- Utilidades de interfaz ----------
 
 function esc(s){ return String(s).replace(/[&<>"]/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[ch])); }
-function msg(t){ $('msg').textContent = t; }
+
+function setMsg(el, text, kind){
+  el.textContent = text;
+  el.className = 'msgbox' + (kind ? ' ' + kind : '');
+  el.hidden = !text;
+}
+function setStatus(text, kind){ setMsg($('msg'), text, kind); }
+function setBk(text, kind){ setMsg($('bkMsg'), text, kind); }
+function box(kind, text){ return `<div class="msgbox ${kind}">${esc(text)}</div>`; }
+function showResult(html){ $('out').innerHTML = html; }
+
+function setDirty(v){ dirty = v; $('dirty').hidden = !v; }
 
 function toHMS(sec){
   sec = Math.min(sec, 86399);
@@ -119,63 +214,17 @@ function toHMS(sec){
 function fromHMS(str){
   if (!str) return null;
   const [h, m, s = 0] = str.split(':').map(Number);
+  if ([h, m, s].some(Number.isNaN)) return null;
   return h*3600 + m*60 + s;
 }
 
-function renderSelect(sel){
-  $('cal').innerHTML = Object.entries(state)
-    .map(([id, c]) => `<option value="${esc(id)}">${esc(c.name)}</option>`).join('');
-  $('cal').value = sel;
-}
+// ---------- Zona horaria y fechas ----------
 
-function fillEditor(cal){
-  $('days').innerHTML = DIAS.map((nombre, i) => {
-    const w = cal.schedule[i];
-    return `<div class="dayrow">
-      <span>${nombre}</span>
-      <input type="checkbox" id="d${i}" ${w ? 'checked' : ''}>
-      <input type="time" step="1" id="s${i}" value="${toHMS(w ? w[0] : 28800)}">
-      <input type="time" step="1" id="e${i}" value="${toHMS(w ? w[1] : 61200)}">
-    </div>`;
-  }).join('');
-  $('holidays').value = cal.holidays.join('\n');
+function tzValid(tz){
+  try { new Intl.DateTimeFormat('en-US', { timeZone: tz }); return true; }
+  catch (e){ return false; }
 }
-
-function loadCal(id){
-  current = id;
-  const c = state[id];
-  $('name').value = c.name;
-  $('tz').value = c.tz;
-  $('locale').value = c.locale;
-  fillEditor(c);
-}
-
-function readEditor(){
-  return DIAS.map((_, i) => {
-    if (!$('d'+i).checked) return null;
-    const s = fromHMS($('s'+i).value), e = fromHMS($('e'+i).value);
-    if (s === null || e === null) return null;
-    return [s, e];
-  });
-}
-
-function getHolidays(){
-  return new Set(
-    $('holidays').value.split(/\r?\n/)
-      .map(s => s.trim())
-      .filter(s => /^\d{4}-\d{2}-\d{2}$/.test(s))
-  );
-}
-
-// Copia lo que hay en el editor al calendario seleccionado en memoria.
-function saveEditor(){
-  const st = state[current];
-  st.name = $('name').value.trim() || st.name;
-  st.tz = $('tz').value.trim();
-  st.locale = $('locale').value.trim();
-  st.schedule = readEditor();
-  st.holidays = [...getHolidays()];
-}
+function activeTz(){ return $('tz').value.trim() || TZ_DEFAULT; }
 
 // Desfase en minutos de una zona horaria en un instante dado (ms UTC).
 function tzOffsetMin(tz, ms){
@@ -210,6 +259,170 @@ function parseDate(id, tz){
   return zone ? utc : wallToInstant(utc, tz);
 }
 
+// Muestra debajo de cada fecha cómo se interpretó, o el error.
+function refreshDate(id, tz){
+  const input = $(id), el = $('i-' + id);
+  input.classList.remove('invalid');
+  input.removeAttribute('aria-invalid');
+  el.className = 'interp';
+  const v = input.value.trim();
+  if (!v){ el.textContent = ''; return; }
+  const t = parseDate(id, tz);
+  if (Number.isNaN(t)){
+    el.textContent = 'Formato no válido. Ejemplo: ' + EXAMPLE;
+    el.className = 'interp err';
+    input.classList.add('invalid');
+    input.setAttribute('aria-invalid', 'true');
+    return;
+  }
+  const f = new Intl.DateTimeFormat('es-DO', {
+    timeZone: tz, weekday: 'short', day: '2-digit', month: 'short', year: 'numeric',
+    hour: '2-digit', minute: '2-digit', second: '2-digit', hourCycle: 'h23'
+  });
+  el.textContent = 'Se interpreta como: ' + f.format(new Date(t)) + ' (' + tz + ')';
+  el.className = 'interp ok';
+}
+
+function refreshDates(){
+  const tz = activeTz();
+  const ids = ['created', 'goal', 'deadline'];
+  if (!tzValid(tz)){
+    $('tz').classList.add('invalid');
+    $('tzErr').textContent = 'Zona horaria no válida. Ejemplo: America/Santo_Domingo';
+    $('tzErr').className = 'interp err';
+    ids.forEach(id => { $(id).classList.remove('invalid'); $('i-' + id).textContent = ''; });
+    return;
+  }
+  $('tz').classList.remove('invalid');
+  $('tzErr').textContent = '';
+  $('tzErr').className = 'interp';
+  ids.forEach(id => refreshDate(id, tz));
+}
+
+// ---------- Horario y días cerrados ----------
+
+function fillEditor(cal){
+  $('days').innerHTML = DIAS.map((nombre, i) => {
+    const w = cal.schedule[i];
+    const on = !!w;
+    return `<div class="dayrow" data-day="${i}">
+      <span>${nombre}</span>
+      <input type="checkbox" id="d${i}" ${on ? 'checked' : ''} aria-label="${nombre} es hábil">
+      <input type="time" step="1" id="s${i}" value="${toHMS(on ? w[0] : 28800)}" aria-label="Inicio ${nombre}" ${on ? '' : 'disabled'}>
+      <input type="time" step="1" id="e${i}" value="${toHMS(on ? w[1] : 61200)}" aria-label="Fin ${nombre}" ${on ? '' : 'disabled'}>
+    </div>`;
+  }).join('');
+  $('holidays').value = cal.holidays.join('\n');
+  refreshHolidays();
+  validateRows();
+}
+
+function rowInvalid(i){
+  if (!$('d' + i).checked) return false;
+  const s = fromHMS($('s' + i).value), e = fromHMS($('e' + i).value);
+  return s === null || e === null || e <= s;
+}
+
+// Marca en rojo los días con horario inválido. Devuelve cuántos son.
+function validateRows(){
+  let n = 0;
+  DIAS.forEach((_, i) => {
+    const bad = rowInvalid(i);
+    const row = $('days').querySelector(`[data-day="${i}"]`);
+    if (row) row.classList.toggle('rowErr', bad);
+    if (bad) n++;
+  });
+  return n;
+}
+
+function readEditor(){
+  return DIAS.map((_, i) => {
+    if (!$('d' + i).checked || rowInvalid(i)) return null;
+    return [fromHMS($('s' + i).value), fromHMS($('e' + i).value)];
+  });
+}
+
+function validDay(s){
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return false;
+  const Y = +m[1], M = +m[2], D = +m[3];
+  const d = new Date(Date.UTC(Y, M - 1, D));
+  return d.getUTCFullYear() === Y && d.getUTCMonth() === M - 1 && d.getUTCDate() === D;
+}
+
+function getHolidays(){
+  const set = new Set(), invalid = [];
+  $('holidays').value.split(/\r?\n/)
+    .map(s => s.trim())
+    .filter(Boolean)
+    .forEach(s => { if (validDay(s)) set.add(s); else invalid.push(s); });
+  return { list: [...set].sort(), invalid };
+}
+
+function refreshHolidays(){
+  const h = getHolidays();
+  $('hCount').textContent = h.list.length ? `${h.list.length} día(s) cerrado(s)` : 'Sin días cerrados';
+  $('hErr').textContent = h.invalid.length
+    ? 'Estas líneas no son fechas válidas (usa AAAA-MM-DD): ' + h.invalid.join(', ')
+    : '';
+  $('holidays').classList.toggle('invalid', h.invalid.length > 0);
+}
+
+// Devuelve el primer problema del calendario en edición, o '' si está listo para usarse.
+function editorError(){
+  const tzRaw = $('tz').value.trim();
+  if (tzRaw && !tzValid(tzRaw)) return 'Corrige la zona horaria: "' + tzRaw + '" no es válida.';
+  if (validateRows()) return 'Corrige el horario: en los días marcados en rojo, la hora de fin debe ser posterior a la de inicio.';
+  const h = getHolidays();
+  if (h.invalid.length) return 'Corrige los días cerrados: ' + h.invalid.join(', ') + ' no son fechas válidas (usa AAAA-MM-DD).';
+  return '';
+}
+
+// ---------- Calendarios guardados en la página ----------
+
+function saveEditor(){
+  const st = state[current];
+  st.name = $('name').value.trim() || st.name;
+  st.tz = $('tz').value.trim();
+  st.locale = $('locale').value.trim();
+  st.schedule = readEditor();
+  st.holidays = getHolidays().list;
+}
+
+function renderSelect(sel){
+  $('cal').innerHTML = Object.entries(state)
+    .map(([id, c]) => `<option value="${esc(id)}">${esc(c.name)}</option>`).join('');
+  $('cal').value = sel;
+}
+
+function loadCal(id){
+  current = id;
+  const c = state[id];
+  $('name').value = c.name;
+  $('tz').value = c.tz;
+  $('locale').value = c.locale;
+  fillEditor(c);
+  refreshDates();
+  setDirty(false);
+}
+
+function disarmDel(){
+  const b = $('bDel');
+  delete b.dataset.armed;
+  b.textContent = 'Eliminar';
+  b.classList.remove('armed');
+  clearTimeout(armTimer);
+}
+
+// ---------- Cálculo ----------
+
+// Formato del resultado: minutos grandes y horas abajo.
+function fmt(min){
+  const r = Math.round(min), abs = Math.abs(r);
+  const h = Math.floor(abs / 60), mm = abs % 60;
+  return `<b>${r.toLocaleString('es')} min</b><small>${r < 0 ? '-' : ''}${h} h ${mm} min</small>`;
+}
+
 // Suma los minutos hábiles entre dos instantes (ms UTC), con las horas en la zona del calendario.
 function bizMinutes(startMs, endMs, sched, hol, tz){
   if (!(endMs > startMs)) return 0;
@@ -234,63 +447,202 @@ function bizMinutes(startMs, endMs, sched, hol, tz){
   return total;
 }
 
-function fmt(min){
-  const r = Math.round(min);
-  const abs = Math.abs(r);
-  const h = Math.floor(abs / 60), mm = abs % 60;
-  return `${r.toLocaleString('es')} min <small>(${r < 0 ? '-' : ''}${h} h ${mm} min)</small>`;
+function calc(){
+  const tz = activeTz();
+  if (!tzValid(tz)){
+    showResult(box('bad', 'La zona horaria no es válida. Corrígela en la sección 2. Calendario.'));
+    $('tz').focus();
+    return;
+  }
+  refreshDates();
+
+  const ids = ['created', 'goal', 'deadline'];
+  const vals = {};
+  let firstBad = null;
+  ids.forEach(id => {
+    vals[id] = parseDate(id, tz);
+    if (Number.isNaN(vals[id]) && !firstBad) firstBad = id;
+  });
+  if (firstBad){
+    showResult(box('bad', 'Revisa el formato de las fechas marcadas.'));
+    $(firstBad).focus();
+    return;
+  }
+  if (vals.created === null){
+    showResult(box('bad', 'Falta la fecha de creación.'));
+    $('created').classList.add('invalid');
+    $('created').focus();
+    return;
+  }
+  if (vals.goal === null && vals.deadline === null){
+    showResult(box('bad', 'Ingresa al menos la meta o el deadline.'));
+    $('goal').focus();
+    return;
+  }
+  const err = editorError();
+  if (err){
+    showResult(box('bad', err));
+    return;
+  }
+
+  const sched = readEditor();
+  const hol = new Set(getHolidays().list);
+  const cards = [];
+  if (vals.goal !== null)
+    cards.push(['Goal – hábiles', 'creación → goal', bizMinutes(vals.created, vals.goal, sched, hol, tz)]);
+  if (vals.deadline !== null)
+    cards.push(['Deadline – hábiles', 'creación → deadline', bizMinutes(vals.created, vals.deadline, sched, hol, tz)]);
+
+  const warns = [];
+  if (vals.deadline !== null && vals.deadline < vals.created)
+    warns.push(box('bad', 'El deadline es anterior a la creación.'));
+  if (vals.goal !== null && vals.goal < vals.created)
+    warns.push(box('warn', 'La meta es anterior a la creación.'));
+  if (vals.goal !== null && vals.deadline !== null && vals.deadline < vals.goal)
+    warns.push(box('warn', 'El deadline es anterior a la meta.'));
+
+  const calName = $('name').value.trim() || state[current].name;
+  $('resMeta').textContent = `${calName} · ${tz}` + (dirty ? ' · cambios sin guardar' : '');
+
+  showResult(warns.join('') + '<div class="results">' +
+    cards.map(([t, sub, v]) =>
+      `<div class="card"><div class="lbl">${t}</div><div class="sub">${sub}</div>${fmt(v)}</div>`
+    ).join('') + '</div>');
 }
 
-// ---------- Gestión de calendarios ----------
+// ---------- Eventos ----------
 
-$('cal').onchange = () => {
+$('calcForm').addEventListener('submit', e => { e.preventDefault(); calc(); });
+
+$('clearDates').addEventListener('click', () => {
+  ['created', 'goal', 'deadline'].forEach(id => { $(id).value = ''; });
+  refreshDates();
+  showResult(EMPTY);
+  $('created').focus();
+});
+
+['created', 'goal', 'deadline'].forEach(id => $(id).addEventListener('input', refreshDates));
+
+// Cualquier cambio en el calendario en edición lo marca como "sin guardar".
+['input', 'change'].forEach(ev => $('calFs').addEventListener(ev, e => {
+  const t = e.target;
+  if (t.id === 'cal' || !t.matches('input, textarea, select')) return;
+  if (t.id === 'holidays') refreshHolidays();
+  if (t.id === 'tz') refreshDates();
+  setDirty(true);
+}));
+
+// Los días desmarcados deshabilitan sus horas; los horarios inválidos se marcan en rojo.
+$('days').addEventListener('change', e => {
+  if (e.target.matches('input[type=checkbox]')){
+    const i = e.target.id.slice(1);
+    $('s' + i).disabled = !e.target.checked;
+    $('e' + i).disabled = !e.target.checked;
+  }
+  validateRows();
+});
+$('days').addEventListener('input', validateRows);
+
+$('cal').addEventListener('change', () => {
+  const target = $('cal').value;
+  if (target === current) return;
+  const err = editorError();
+  if (err){
+    setStatus(err, 'bad');
+    $('cal').value = current;
+    return;
+  }
+  const prev = state[current].name;
+  const hadChanges = dirty;
   saveEditor();
-  loadCal($('cal').value);
-};
+  loadCal(target);
+  setStatus(hadChanges ? `Cambios de "${prev}" conservados mientras la página esté abierta.` : '', hadChanges ? 'good' : '');
+});
 
-$('bSave').onclick = () => {
+$('bSave').addEventListener('click', () => {
+  const err = editorError();
+  if (err){ setStatus(err, 'bad'); return; }
+  if (!$('name').value.trim()){
+    setStatus('El calendario necesita un nombre.', 'bad');
+    $('name').focus();
+    return;
+  }
   saveEditor();
   renderSelect(current);
-  msg('Cambios guardados en la página.');
-};
+  setDirty(false);
+  setStatus(`Cambios guardados en "${state[current].name}". Descarga el respaldo para conservarlos al cerrar la página.`, 'good');
+});
 
-$('bNew').onclick = () => {
-  saveEditor();
-  const name = $('name').value.trim();
-  if (!name){ msg('Escribe un nombre para el calendario nuevo.'); return; }
+// Crea un calendario nuevo con lo que está en el editor. El original no se modifica.
+$('bNew').addEventListener('click', () => {
+  const err = editorError();
+  if (err){ setStatus(err, 'bad'); return; }
+  const nm = $('name').value.trim();
+  if (!nm){
+    setStatus('Escribe un nombre para el calendario nuevo.', 'bad');
+    $('name').focus();
+    return;
+  }
+  if (Object.values(state).some(c => c.name.toLowerCase() === nm.toLowerCase())){
+    setStatus('Ya existe un calendario con ese nombre. Usa otro.', 'bad');
+    $('name').focus();
+    return;
+  }
   const id = 'c' + Date.now();
   state[id] = {
-    name,
+    name: nm,
     tz: $('tz').value.trim(),
     locale: $('locale').value.trim(),
     schedule: readEditor(),
-    holidays: [...getHolidays()]
+    holidays: getHolidays().list
   };
   renderSelect(id);
   loadCal(id);
-  msg('Calendario creado.');
-};
+  setStatus(`Calendario "${nm}" creado. El original no cambió.`, 'good');
+});
 
-$('bDel').onclick = () => {
-  if (Object.keys(state).length <= 1){ msg('Debe quedar al menos un calendario.'); return; }
+// Eliminar pide confirmación en dos pasos, sin usar confirm().
+$('bDel').addEventListener('click', () => {
+  const b = $('bDel');
+  if (!b.dataset.armed){
+    b.dataset.armed = '1';
+    b.textContent = 'Confirmar eliminación';
+    b.classList.add('armed');
+    setStatus(`Haz clic otra vez para eliminar "${state[current].name}". Esta acción no se puede deshacer.`, 'warn');
+    clearTimeout(armTimer);
+    armTimer = setTimeout(disarmDel, 5000);
+    return;
+  }
+  disarmDel();
+  if (Object.keys(state).length <= 1){
+    setStatus('Debe quedar al menos un calendario.', 'bad');
+    return;
+  }
+  const removed = state[current].name;
   delete state[current];
   const first = Object.keys(state)[0];
   renderSelect(first);
   loadCal(first);
-  msg('Calendario eliminado.');
-};
+  setStatus(`Calendario "${removed}" eliminado.`, 'good');
+});
 
-// ---------- Exportar / importar JSON ----------
+// ---------- Respaldo JSON ----------
 
-$('bExp').onclick = () => {
+$('bExp').addEventListener('click', () => {
+  const err = editorError();
+  if (err){ setBk('Antes de descargar, ' + err.charAt(0).toLowerCase() + err.slice(1), 'bad'); return; }
   saveEditor();
-  const data = {
+  renderSelect(current);
+  setDirty(false);
+
+  const text = JSON.stringify({
     version: 1,
     calendars: Object.entries(state).map(([id, c]) => ({ id, ...c }))
-  };
-  const text = JSON.stringify(data, null, 2);
+  }, null, 2);
+
   $('jsonOut').value = text;
   $('jsonOut').hidden = false;
+
   try {
     const url = URL.createObjectURL(new Blob([text], { type: 'application/json' }));
     const a = document.createElement('a');
@@ -300,77 +652,97 @@ $('bExp').onclick = () => {
     a.click();
     a.remove();
     setTimeout(() => URL.revokeObjectURL(url), 1000);
-    msg('Descarga iniciada. Si no aparece, copia el texto de abajo y guárdalo como calendarios.json.');
-  } catch (err) {
-    msg('No se pudo descargar. Copia el texto de abajo y guárdalo como calendarios.json.');
+    setBk('Descarga iniciada. Si no aparece, copia el contenido de abajo en un archivo calendarios.json.', 'good');
+  } catch (e) {
+    setBk('No se pudo descargar. Copia el contenido de abajo en un archivo calendarios.json.', 'warn');
   }
-};
+});
 
-$('imp').onchange = async e => {
-  const file = e.target.files[0];
-  if (!file) return;
+function isCalendar(c){
+  return Boolean(
+    c && typeof c.name === 'string' && c.name.trim() &&
+    Array.isArray(c.schedule) && c.schedule.length === 7 &&
+    Array.isArray(c.holidays) &&
+    c.schedule.every(w => w === null || (
+      Array.isArray(w) && w.length === 2 &&
+      Number.isInteger(w[0]) && Number.isInteger(w[1]) &&
+      w[0] >= 0 && w[1] > w[0] && w[1] <= 86399
+    ))
+  );
+}
+
+$('imp').addEventListener('change', async e => {
+  const input = e.target;
   try {
+    const file = input.files[0];
+    if (!file) return;
+    const err = editorError();
+    if (err){ setBk('Antes de importar, ' + err.charAt(0).toLowerCase() + err.slice(1), 'bad'); return; }
+
+    let data;
+    try { data = JSON.parse(await file.text()); }
+    catch (parseErr){ setBk('El archivo no es un JSON válido.', 'bad'); return; }
+
+    const list = Array.isArray(data) ? data : (data && data.calendars);
+    if (!Array.isArray(list)){
+      setBk('El archivo no tiene la lista "calendars".', 'bad');
+      return;
+    }
+
     saveEditor();
-    const data = JSON.parse(await file.text());
-    const list = Array.isArray(data) ? data : data.calendars;
-    if (!Array.isArray(list)) throw new Error('falta la lista "calendars".');
-    let n = 0;
+    let n = 0, replaced = 0, skipped = 0;
     list.forEach((c, i) => {
-      const valido = c && typeof c.name === 'string' && Array.isArray(c.schedule) &&
-        c.schedule.length === 7 && Array.isArray(c.holidays) &&
-        c.schedule.every(w => w === null || (Array.isArray(w) && w.length === 2 && w.every(Number.isFinite)));
-      if (!valido) return;
-      const id = (typeof c.id === 'string' && c.id) ? c.id : 'c' + Date.now() + i;
+      if (!isCalendar(c)){ skipped++; return; }
+      const id = (typeof c.id === 'string' && c.id.trim()) ? c.id.trim() : 'c' + Date.now() + i;
+      if (state[id]) replaced++;
       state[id] = {
-        name: c.name,
-        tz: typeof c.tz === 'string' ? c.tz : '',
-        locale: typeof c.locale === 'string' ? c.locale : '',
+        name: c.name.trim(),
+        tz: typeof c.tz === 'string' ? c.tz.trim() : '',
+        locale: typeof c.locale === 'string' ? c.locale.trim() : '',
         schedule: c.schedule,
-        holidays: c.holidays.filter(h => typeof h === 'string')
+        holidays: c.holidays.filter(h => typeof h === 'string' && validDay(h.trim())).map(h => h.trim())
       };
       n++;
     });
+
+    if (!n){
+      setBk('No se importó ningún calendario. Revisa la estructura del archivo.', 'bad');
+      return;
+    }
     renderSelect(current);
     loadCal(current);
-    msg(`Importados ${n} calendarios.`);
+
+    let text = `Importados ${n} calendario(s)`;
+    if (replaced) text += `, ${replaced} reemplazado(s)`;
+    if (skipped) text += `. ${skipped} omitido(s) por datos no válidos`;
+    setBk(text + '.', skipped ? 'warn' : 'good');
   } catch (err) {
-    msg('Error al importar: ' + err.message);
+    setBk('Error al importar: ' + err.message, 'bad');
+  } finally {
+    input.value = '';
   }
-  e.target.value = '';
-};
+});
 
-// ---------- Cálculo ----------
+// ---------- Tema ----------
 
-$('calc').onclick = () => {
-  const out = $('out');
-  const tz = $('tz').value.trim() || TZ_DEFAULT;
-  try { new Intl.DateTimeFormat('en-US', { timeZone: tz }); }
-  catch (err){ out.innerHTML = `<p class="err">Zona horaria inválida: ${esc(tz)}</p>`; return; }
-
-  const c = parseDate('created', tz), g = parseDate('goal', tz), d = parseDate('deadline', tz);
-
-  if ([c, g, d].some(x => x !== null && isNaN(x))){
-    out.innerHTML = '<p class="err">Formato inválido. Usa AAAAMMDDTHHMMSS.mmm GMT, por ejemplo 20261016T134845.447 GMT.</p>';
-    return;
-  }
-  if (!c){ out.innerHTML = '<p class="err">Ingresa la fecha de creación.</p>'; return; }
-  if (!g && !d){ out.innerHTML = '<p class="err">Ingresa al menos la meta o el deadline.</p>'; return; }
-
-  const sched = readEditor();
-  const hol = getHolidays();
-
-  const cards = [];
-  if (g) cards.push(['Goal – hábiles (creación → goal)', bizMinutes(c, g, sched, hol, tz)]);
-  if (d) cards.push(['Deadline – hábiles (creación → deadline)', bizMinutes(c, d, sched, hol, tz)]);
-
-  let warnings = '';
-  if (d && d < c) warnings += '<p class="err">El deadline es anterior a la creación.</p>';
-  if (g && d && d < g) warnings += '<p class="warn">⚠ El deadline es anterior a la meta.</p>';
-
-  out.innerHTML = warnings + '<div class="results">' +
-    cards.map(([t, v]) => `<div class="card">${t}<b>${fmt(v)}</b></div>`).join('') +
-    '</div>';
-};
+// "system" quita el atributo y deja que el navegador decida; "light" y "dark" lo fijan.
+function applyTheme(mode){
+  const root = document.documentElement;
+  if (mode === 'light' || mode === 'dark') root.dataset.theme = mode;
+  else delete root.dataset.theme;
+  $('theme').value = mode;
+}
+function savedTheme(){
+  try {
+    const v = localStorage.getItem('sla-theme');
+    return ['light', 'dark', 'system'].includes(v) ? v : 'system';
+  } catch (e){ return 'system'; }
+}
+function saveTheme(v){
+  try { localStorage.setItem('sla-theme', v); } catch (e){ /* sin almacenamiento: solo dura esta visita */ }
+}
+$('theme').addEventListener('change', e => { applyTheme(e.target.value); saveTheme(e.target.value); });
+applyTheme(savedTheme());
 
 // ---------- Inicio ----------
 renderSelect(current);
